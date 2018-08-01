@@ -1,3 +1,7 @@
-output "PostreSQL Password" {
-  value = "${random_pet.replicated-pwd.id}"
+output "database_endpoint" {
+   value = "${module.pes.database_endpoint}"
+}
+
+output "database_port" {
+   value = "${module.pes.database_port}"
 }

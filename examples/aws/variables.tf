@@ -18,20 +18,23 @@ variable "ssh_key_name" {
   description = "AWS key pair name to install on the EC2 instance"
 }
 
-variable "owner" {
-  description = "EC2 instance owner"
+variable "vpc_id" {
+  description = "ID of VPC to deploy into"
 }
 
-variable "ttl" {
-  description = "EC2 instance TTL"
-  default     = "168"
+# Please include at least 2 subnets from your VPC.
+variable "subnet_ids" {
+  description = "Subnet IDs of subnets in VPC"
 }
 
-variable "ssl_certificate_id" {
-  description = "ARN of an SSL certificate uploaded to IAM or AWS Certificate Manager for use with PTFE ELB"
+variable "database_password" {
+  description = "Password for RDS PostgreSQL database"
 }
 
-variable "route53_zone" {
-  description = "name of Route53 zone to use"
-  default = "hashidemos.io"
+variable "ebs_device_name" {
+  description = "name of second EBS volume (ebs_block_device) on EC2 instances"
+}
+
+variable "security_group_id" {
+  description = "ID of security group to attach to EC2 and PostgreSQL RDS instances"
 }
