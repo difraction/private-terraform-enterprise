@@ -66,6 +66,6 @@ resource "aws_db_instance" "pes" {
   username                  = "ptfe"
   password                  = "${var.database_pwd}"
   db_subnet_group_name = "${aws_db_subnet_group.pes.id}"
-  vpc_security_group_ids    = ["${var.security_group_ids}"]
+  vpc_security_group_ids    = ["${var.security_group_id}"]
   final_snapshot_identifier = "${local.namespace}-db-instance-final-snapshot"
 }
