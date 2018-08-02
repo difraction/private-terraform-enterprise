@@ -31,11 +31,6 @@ resource "aws_instance" "pes" {
   }
 }
 
-resource "aws_eip" "pes" {
-  instance = "${aws_instance.pes.0.id}"
-  vpc      = true
-}
-
 resource "aws_s3_bucket" "pes" {
   bucket = "${local.namespace}-s3-bucket"
   acl    = "private"
