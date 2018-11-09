@@ -3,11 +3,11 @@
 #------------------------------------------------------------------------------
 
 locals {
-  namespace = "${var.namespace}-pes"
+  namespace = "${var.namespace}"
 }
 
 resource "aws_instance" "pes" {
-  count                  = 2
+  count                  = 1
   ami                    = "${var.aws_instance_ami}"
   instance_type          = "${var.aws_instance_type}"
   subnet_id              = "${element(var.subnet_ids, count.index)}"
@@ -50,17 +50,24 @@ resource "aws_db_subnet_group" "pes" {
   subnet_ids  = ["${var.subnet_ids}"]
 }
 
-resource "aws_db_instance" "pes" {
-  allocated_storage         = 10
-  engine                    = "postgres"
-  engine_version            = "9.4"
-  instance_class            = "db.t2.medium"
-  identifier = "${local.namespace}-db-instance"
-  name                      = "ptfe"
-  storage_type              = "gp2"
-  username                  = "ptfe"
-  password                  = "${var.database_pwd}"
+resource "aws_rds_cluster" "pes" {
+  cluster_identifier      = "${local.namespace}-cluster"
+  engine                  = "aurora-postgresql"
+  engine_version          = "9.6.8"
+  database_name           = "ptfe"
+  master_username         = "ptfe"
+  master_password         = "${var.database_pwd}"
+  db_subnet_group_name    = "${aws_db_subnet_group.pes.id}"
+  vpc_security_group_ids  = ["${var.security_group_id}"]
+  final_snapshot_identifier = "${local.namespace}-final-snapshot"
+}
+
+resource "aws_rds_cluster_instance" "pes" {
+  count              = 1
+  identifier         = "${local.namespace}-db-instance"
+  cluster_identifier = "${aws_rds_cluster.pes.id}"
+  instance_class     = "db.r4.large"
+  engine                  = "aurora-postgresql"
+  engine_version          = "9.6.8"
   db_subnet_group_name = "${aws_db_subnet_group.pes.id}"
-  vpc_security_group_ids    = ["${var.security_group_id}"]
-  final_snapshot_identifier = "${local.namespace}-db-instance-final-snapshot"
 }
