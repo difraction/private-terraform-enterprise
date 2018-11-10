@@ -3,17 +3,16 @@
 #------------------------------------------------------------------------------
 
 locals {
-  namespace = "${var.namespace}-pes"
+  namespace = "${var.namespace}"
 }
 
 resource "aws_instance" "pes" {
-  count                  = 2
+  count                  = 1
   ami                    = "${var.aws_instance_ami}"
   instance_type          = "${var.aws_instance_type}"
   subnet_id              = "${element(var.subnet_ids, count.index)}"
   vpc_security_group_ids = ["${var.vpc_security_group_ids}"]
   key_name               = "${var.ssh_key_name}"
-  user_data              = "${var.user_data}"
   iam_instance_profile   = "${aws_iam_instance_profile.ptfe.name}"
 
   root_block_device {
@@ -28,23 +27,31 @@ resource "aws_instance" "pes" {
   }
 }
 
-resource "aws_eip" "pes" {
-  instance = "${aws_instance.pes.0.id}"
-  vpc      = true
-}
-
 resource "aws_route53_record" "pes" {
   zone_id = "${var.hashidemos_zone_id}"
   name    = "${local.namespace}.hashidemos.io."
   type    = "A"
-  ttl     = "300"
-  records = ["${aws_eip.pes.public_ip}"]
+
+  alias {
+    name                   = "${aws_elb.ptfe.dns_name}"
+    zone_id                = "${aws_elb.ptfe.zone_id}"
+    evaluate_target_health = true
+  }
 }
 
 resource "aws_s3_bucket" "pes" {
   bucket = "${local.namespace}-s3-bucket"
   acl    = "private"
 
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        kms_master_key_id = "arn:aws:kms:us-east-1:753646501470:key/00c892e8-40c4-4048-a650-0f755876503d"
+        sse_algorithm     = "aws:kms"
+      }
+    }
+  }
+  
   versioning {
     enabled = true
   }
@@ -54,7 +61,35 @@ resource "aws_s3_bucket" "pes" {
   }
 }
 
-resource "aws_db_instance" "pes" {
+resource "aws_db_subnet_group" "pes" {
+  name_prefix = "${var.namespace}"
+  description = "${var.namespace}-db-subnet-group"
+  subnet_ids  = ["${var.subnet_ids}"]
+}
+
+resource "aws_rds_cluster" "pes" {
+  cluster_identifier      = "${local.namespace}-cluster"
+  engine                  = "aurora-postgresql"
+  engine_version          = "9.6.8"
+  database_name           = "ptfe"
+  master_username         = "ptfe"
+  master_password         = "${var.database_pwd}"
+  db_subnet_group_name    = "${aws_db_subnet_group.pes.id}"
+  vpc_security_group_ids  = ["${var.vpc_security_group_ids}"]
+  final_snapshot_identifier = "${local.namespace}-final-snapshot"
+}
+
+resource "aws_rds_cluster_instance" "pes" {
+  count              = 1
+  identifier         = "${local.namespace}-db-instance"
+  cluster_identifier = "${aws_rds_cluster.pes.id}"
+  instance_class     = "db.r4.large"
+  engine                  = "aurora-postgresql"
+  engine_version          = "9.6.8"
+  db_subnet_group_name = "${aws_db_subnet_group.pes.id}"
+}
+
+/*resource "aws_db_instance" "pes" {
   allocated_storage         = 10
   engine                    = "postgres"
   engine_version            = "9.4"
@@ -67,7 +102,7 @@ resource "aws_db_instance" "pes" {
   db_subnet_group_name      = "${var.db_subnet_group_name}"
   vpc_security_group_ids    = ["${var.vpc_security_group_ids}"]
   final_snapshot_identifier = "${local.namespace}-db-instance-final-snapshot"
-}
+}*/
 
 #------------------------------------------------------------------------------
 # iam for ec2 to s3
