@@ -190,6 +190,7 @@ ls -l /etc/replicated.conf (make sure all users can read)
 ```
 
 ## Post-Installation Checks
+Here are some post-installation checks to run.
 
 ### Curl Check
 Use the following command, making sure the IP is the private IP of the EC2 instance.
