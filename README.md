@@ -7,14 +7,16 @@ The ca_certs field corresponds to the SSL/TLS section of the admin console setti
 
 The cert and key specified in the replicated.conf file correspond to the cert and key you would add on the first PTFE admin console screen if installing manually.
 
-## Aurora PTFE
-
+## Aurora PostgreSQL for PTFE
+These are my Aurora properties:
+```
 database_endpoint = roger-aurora-ptfe-cluster.cluster-cd2ntnfz8tii.us-east-1.rds.amazonaws.com
 database_password = password
 database_port = 5432
 fqdn = roger-aurora-ptfe.hashidemos.io
+```
 
-### Configure PostgreSQL
+### Add Schemas to PostgreSQL
 ```
 sudo yum install postgresql96.x86_64 -y
 psql -h roger-aurora-ptfe-cluster.cluster-cd2ntnfz8tii.us-east-1.rds.amazonaws.com -d ptfe -U ptfe
