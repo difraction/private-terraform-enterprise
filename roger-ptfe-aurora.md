@@ -3,7 +3,7 @@
 ## Aurora PTFE:
 
 database_endpoint = roger-aurora-ptfe-cluster.cluster-cd2ntnfz8tii.us-east-1.rds.amazonaws.com
-database_password = Pas$w0rd
+database_password = password
 database_port = 5432
 fqdn = roger-aurora-ptfe.hashidemos.io
 
@@ -80,14 +80,14 @@ fqdn = roger-aurora-ptfe.hashidemos.io
 
 {
     "DaemonAuthenticationType":          "password",
-    "DaemonAuthenticationPassword":      "Pas$w0rd",
+    "DaemonAuthenticationPassword":      "password",
     "BypassPreflightChecks":             true,
     "LicenseFileLocation":               "/home/ec2-user/se-03302019.rli",
     "LicenseBootstrapAirgapPackagePath": "/home/ec2-user/bundle.airgap",
     "ImportSettingsFrom":                "/home/ec2-user/ptfe-settings.json",
     "TlsBootstrapType":                  "server-path",
     "TlsBootstrapHostname":              "roger-aurora-ptfe.hashidemos.io",
-    "TlsBootstrapCert":                  "/home/ec2-user/certs/cert.cer",
+    "TlsBootstrapCert":                  "/home/ec2-user/certs/cert.cert",
     "TlsBootstrapKey":                   "/home/ec2-user/certs/pk.key"
 }
 
@@ -98,10 +98,12 @@ https://support-uploads.hashicorp.com/u/ptfe-support-bundles
 Created Cert and key with Vault PKI backend
 Copied cert chain (cert, then CA) into ca_certs attribute of ptfe-settings.json using format that Vault exported which included `\n` instead of actual new lines.  PTFE needs this because Vault is a private CA.
 
-Created cert.cer with cert followed by ca-cert on PTFE instance
+Created cert.cert with cert followed by ca-cert on PTFE instance
 Created pk.key with key on PTFE instance
 
-In these files, I replaced "\n" with "\r" using `s:/\\n/\r/g`
+### vi commands:
+Command to replace "\n" with line breaks `\r`: `:s/\\n/\r/g`
+Command to replace line breaks with "\n": `:1,$s/\n/\\n`
 
 Add cert and key to ACM.
 Attach Cert to ELB
@@ -114,12 +116,14 @@ with `curl -o replicated.tar.gz https://s3.amazonaws.com/replicated-airgap-work/
 Untar with `tar xzvf replicated.tar.gz`
 
 Download PTFE v201810-2 with:
-`wget -O bundle.airgap --content-disposition "https://replicated-airgap-rw-prod.s3.amazonaws.com/61b8d33704e2bb6a7ce87f09cbe2269b/299/archive.tgz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJF5BJMACS5KILFMQ%2F20181109%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181109T062135Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3DTerraform%20Enterprise%20-%20299.airgap&X-Amz-Signature=e386c22c233462a407f702a0e6b988ce0f78b41d11188bc4f3ed0556a7090aef"`
+
+Use Password RG4XAG
+
+`wget -O bundle.airgap --content-disposition "https://replicated-airgap-rw-prod.s3.amazonaws.com/61b8d33704e2bb6a7ce87f09cbe2269b/299/archive.tgz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJF5BJMACS5KILFMQ%2F20181110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181110T152638Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3DTerraform%20Enterprise%20-%20299.airgap&X-Amz-Signature=dabdc40c01eeacdf6d8266e08c5042863a21bcf77ab38642efa8481ccf5a6701"`
 
 ## Configure PostgreSQL
 ```
-sudo su -
-yum install postgresql96.x86_64 -y
+sudo yum install postgresql96.x86_64 -y
 psql -h roger-aurora-ptfe-cluster.cluster-cd2ntnfz8tii.us-east-1.rds.amazonaws.com -d ptfe -U ptfe
 \l
 \c ptfe
@@ -132,13 +136,13 @@ CREATE SCHEMA registry;
 
 ## Install Docker
 ```
-yum --showduplicates list docker | expand
-sudo yum install docker-17.12.1ce-1.135.amzn1
+#yum --showduplicates list docker | expand
+sudo yum install -y docker-17.12.1ce-1.135.amzn1
 sudo service docker start
-sudo usermod -a -G docker <user>
-yum -y install yum-plugin-versionlock
-yum -y install jq
-yum versionlock docker*
+sudo usermod -a -G docker ec2-user
+#sudo yum -y install yum-plugin-versionlock
+#sudo yum -y install jq
+#sudo yum versionlock docker*
 ```
 ## SELinux
 Ran `getenforce` to check SELinux status.  It was Disabled.
@@ -168,8 +172,8 @@ ls -l /etc/replicated.conf (make sure all users can read)
 ./install.sh \
     airgap \
     no-proxy \
-    private-address=10.0.1.34 \
-    public-address=34.235.161.105
+    private-address=10.0.1.36 \
+    public-address=18.232.60.176
 ```
 
 ## Test App
@@ -177,7 +181,7 @@ ls -l /etc/replicated.conf (make sure all users can read)
 
 I visited the Admin Console and found that properties were set.
 
-But `curl -ksfSv --connect-timeout 5 https://10.0.1.34/_health_check` gives "HTTP/1.1 200 OK"
+But `curl -ksfSv --connect-timeout 5 https://10.0.1.36/_health_check` gives "HTTP/1.1 200 OK"
 
 ## Get Docker logs:
 
@@ -218,8 +222,8 @@ ls -l /etc/replicated.conf (make sure all users can read)
 ./install.sh \
     airgap \
     no-proxy \
-    private-address=10.0.1.34 \
-    public-address=34.235.161.105
+    private-address=10.0.1.36 \
+    public-address=18.232.60.176
 ```
 UI has all properties and let me log in
 
@@ -227,7 +231,7 @@ Saw lots of stuff loading on dashboard
 
 Eventually get to point where dashboard shows "Starting" and "Waiting for app to report ready..."
 
-`curl -ksfSv --connect-timeout 5 https://10.0.1.34/_health_check` gives:
+`curl -ksfSv --connect-timeout 5 https://10.0.1.36/_health_check` gives:
 
 The requested URL returned error: 502 Bad Gateway
 
@@ -252,3 +256,46 @@ Stop everything, remove all replicated, removed schemas from DB, stop and restar
 
 Then recreate schemas in DB
 Install replicated
+
+## Destroy instance and start with new one
+Terminate EC2 instance
+`terraform apply` to get new one
+Change private and public IPs in install.sh command to match new ones
+Make sure ELB points to new instance
+Reinstall Docker
+Download all software again
+`mkdir certs`
+SCP replicated.conf, ptfe-settings.json, se-03302019.rli, pk.key, cert.cert to new instance.
+Check permissions and owner of these files
+
+Run install.sh at about 9:30pm
+
+Connected to admin console,
+was prompted for password
+settings all there
+
+9:33: docker ps still just shows replicated containers
+9:34, see some ptfe containers
+rabbitmq shows "user 'hashicorp' authenticated and granted access to vhost 'hashicorp'"
+
+curl -ksfSv --connect-timeout 5 https://10.0.1.36/_health_check gives 200
+
+Dashboard shows app started
+
+clicking on link under that to go to app gives This site can't be reached:
+
+ERR_CONNECTION_REFUSED:  but that is probably just issue with ELB
+
+Changed health check to `HTTPS:443/_health_check`
+
+ELB has no listeners
+
+Added listener back and made sure right cert attached.
+
+Was able to connect to app, but cert must be wrong.  Says insecure.
+
+Tried switching certs in TLS section of settings around to match what is in cert.cert.
+Restarted app.
+
+Might have to issue cert to include IP of instance
+Did that using public IP and private IP
