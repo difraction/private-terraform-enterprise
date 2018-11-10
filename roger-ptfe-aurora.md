@@ -98,7 +98,7 @@ https://support-uploads.hashicorp.com/u/ptfe-support-bundles
 Created Cert and key with Vault PKI backend
 Copied cert chain (cert, then CA) into ca_certs attribute of ptfe-settings.json using format that Vault exported which included `\n` instead of actual new lines.  PTFE needs this because Vault is a private CA.
 
-Created cert.cert with cert followed by ca-cert on PTFE instance
+Created cert.cert with leaf.cert followed by ca.cert on PTFE instance with `cat leaf.cert ca.cert > cert.cert`
 Created pk.key with key on PTFE instance
 
 ### vi commands:
@@ -119,7 +119,7 @@ Download PTFE v201810-2 with:
 
 Use Password RG4XAG
 
-`wget -O bundle.airgap --content-disposition "https://replicated-airgap-rw-prod.s3.amazonaws.com/61b8d33704e2bb6a7ce87f09cbe2269b/299/archive.tgz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJF5BJMACS5KILFMQ%2F20181110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181110T152638Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3DTerraform%20Enterprise%20-%20299.airgap&X-Amz-Signature=dabdc40c01eeacdf6d8266e08c5042863a21bcf77ab38642efa8481ccf5a6701"`
+`wget -O bundle.airgap --content-disposition "https://replicated-airgap-rw-prod.s3.amazonaws.com/61b8d33704e2bb6a7ce87f09cbe2269b/299/archive.tgz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAJF5BJMACS5KILFMQ%2F20181110%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20181110T165740Z&X-Amz-Expires=600&X-Amz-SignedHeaders=host&response-content-disposition=attachment%3B%20filename%3DTerraform%20Enterprise%20-%20299.airgap&X-Amz-Signature=8b78348ff0f263598b3f92998f3f07c469708d3ef11b7452729488382db823ce"`
 
 ## Configure PostgreSQL
 ```
@@ -172,8 +172,8 @@ ls -l /etc/replicated.conf (make sure all users can read)
 ./install.sh \
     airgap \
     no-proxy \
-    private-address=10.0.1.36 \
-    public-address=18.232.60.176
+    private-address=10.0.1.230 \
+    public-address=54.165.162.153
 ```
 
 ## Test App
@@ -181,7 +181,7 @@ ls -l /etc/replicated.conf (make sure all users can read)
 
 I visited the Admin Console and found that properties were set.
 
-But `curl -ksfSv --connect-timeout 5 https://10.0.1.36/_health_check` gives "HTTP/1.1 200 OK"
+But `curl -ksfSv --connect-timeout 5 https://10.0.1.230/_health_check` gives "HTTP/1.1 200 OK"
 
 ## Get Docker logs:
 
@@ -222,8 +222,8 @@ ls -l /etc/replicated.conf (make sure all users can read)
 ./install.sh \
     airgap \
     no-proxy \
-    private-address=10.0.1.36 \
-    public-address=18.232.60.176
+    private-address=10.0.1.230 \
+    public-address=54.165.162.153
 ```
 UI has all properties and let me log in
 
@@ -231,7 +231,7 @@ Saw lots of stuff loading on dashboard
 
 Eventually get to point where dashboard shows "Starting" and "Waiting for app to report ready..."
 
-`curl -ksfSv --connect-timeout 5 https://10.0.1.36/_health_check` gives:
+`curl -ksfSv --connect-timeout 5 https://10.0.1.230/_health_check` gives:
 
 The requested URL returned error: 502 Bad Gateway
 
@@ -278,7 +278,7 @@ settings all there
 9:34, see some ptfe containers
 rabbitmq shows "user 'hashicorp' authenticated and granted access to vhost 'hashicorp'"
 
-curl -ksfSv --connect-timeout 5 https://10.0.1.36/_health_check gives 200
+curl -ksfSv --connect-timeout 5 https://10.0.1.230/_health_check gives 200
 
 Dashboard shows app started
 
@@ -299,3 +299,49 @@ Restarted app.
 
 Might have to issue cert to include IP of instance
 Did that using public IP and private IP
+
+## Saturday 11/10
+
+## Test 1: leaf-root in cert.cert, no cert in ca_certs
+
+Installed.
+
+All settings populated
+
+`curl -ksfSv --connect-timeout 5 https://10.0.1.230/_health_check` gives 502 Bad Gateway, but then 200 after another minue.
+
+App did start.
+
+Clicking on link in dashboard to launch app worked
+
+Was able to add VCS connection to Github and create workspace (hello-world)
+
+But plan hangs:
+
+Adding cert to admin console under SSL/TLS config section:
+leaf -> root
+Save
+Restart app
+
+Plan worked!.  So, leaf->root in ca_certs should be ok.
+
+Tested root->leaf in SSL/TLS config section:
+Save
+Restart App
+
+Plan worked.  So, root->leaf in ca_cert should also be ok.
+
+However, I wonder if the first pair (leaf->root) was cached?
+
+## Will now test new instance with root->leaf in ca_certs
+
+Admin console asked me for password, but then promted me to enter certs.  This is because I had SCP-ed wrong pk.key.  After replacing and setting paths in admin console, I found all settings.
+
+Double-checked that I have leaf->root in cert.cert
+and that I have root->leaf in json
+
+PTFE apps running (even before I fixed key)
+
+`curl -ksfSv --connect-timeout 5 https://10.0.1.230/_health_check` gives 200
+
+app works (even before I fixed key)

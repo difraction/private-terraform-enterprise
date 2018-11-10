@@ -51,7 +51,7 @@ resource "aws_s3_bucket" "pes" {
       }
     }
   }
-  
+
   versioning {
     enabled = true
   }
@@ -175,7 +175,7 @@ resource "aws_elb" "ptfe" {
         healthy_threshold = 2
         unhealthy_threshold = 3
         timeout = 5
-        target = "HTTPS:443/app"
+        target = "HTTPS:443/_health_check"
         interval = 15
     }
 }
