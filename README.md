@@ -143,6 +143,7 @@ Untar with `tar xzvf replicated.tar.gz`
 
 Use your password to get PTFE download link from replicated.com
 Then download on EC2 instance with:
+
 `wget -O bundle.airgap --content-disposition "<ptfe_download_link>"`
 
 ## Install Docker
@@ -192,10 +193,13 @@ ls -l /etc/replicated.conf (make sure all users can read)
 
 ### Curl Check
 Use the following command, making sure the IP is the private IP of the EC2 instance.
+
 `curl -ksfS --connect-timeout 5 https://10.0.1.43/_health_check`
 
 Initially, you will get "Connection refused"
+
 At some point, that  changes to "502 Bad Gateway"
+
 If the installation is successful, it should just return without message which means curl received HTTP 200 status.
 
 ### Admin Console Check
@@ -261,13 +265,17 @@ But plan hangs:
 
 Added cert to admin console under SSL/TLS config section:
 leaf -> root
+
 Save
+
 Restart app
 
 Plan worked!.  So, leaf->root in ca_certs should be ok.
 
 Tested root->leaf in SSL/TLS config section:
+
 Save
+
 Restart App
 
 Plan worked.  So, root->leaf in ca_cert should also be ok.
@@ -276,13 +284,17 @@ However, I wonder if the first pair (leaf->root) was cached?
 
 ### Test 2: leaf -> root in cert.cert, leaf -> root in ca_certs of json
 `curl -ksfSv --connect-timeout 5 https://10.0.1.43/_health_check` gives 443: Connection refused
+
 Then changes to 502 Bad Gateway
+
 Then to 200
 
 admin console accepted password and shows settings
+
 app started
 
 app working
+
 run worked
 
 ### Test 3: leaf -> root in cert.cert, root -> leaf in ca_certs of json
