@@ -7,7 +7,7 @@ The ca_certs field corresponds to the SSL/TLS section of the admin console setti
 
 The cert and key specified in the replicated.conf file correspond to the cert and key you would add on the first PTFE admin console screen if installing manually.
 
-## Aurora PTFE:
+## Aurora PTFE
 
 database_endpoint = roger-aurora-ptfe-cluster.cluster-cd2ntnfz8tii.us-east-1.rds.amazonaws.com
 database_password = password
@@ -34,7 +34,7 @@ Copied cert chain (cert, then CA) into ca_certs attribute of ptfe-settings.json 
 Created cert.cert with leaf.cert followed by ca.cert on PTFE instance with `cat leaf.cert ca.cert > cert.cert`
 Created pk.key with key on PTFE instance
 
-### vi commands:
+### vi commands
 Command to replace "\n" with line breaks `\r`: `:s/\\n/\r/g`
 Command to replace line breaks with "\n": `:1,$s/\n/\\n`
 
@@ -44,7 +44,7 @@ Attach Cert to ELB
 ## Configuration files
 These are the configuration files needed by the installer
 
-### ptfe-settings.json:
+### ptfe-settings.json
 ```
 {
 	"aws_instance_profile": {
@@ -130,7 +130,7 @@ These are the configuration files needed by the installer
 ```
 
 
-## Download replicated.tar.gz and
+## Download replicated.tar.gz
 Download replicated.tar.gz with
 `curl -o replicated.tar.gz https://s3.amazonaws.com/replicated-airgap-work/replicated.tar.gz`
 
@@ -213,7 +213,7 @@ vi replicated-ui.log
 ## Retrying Installation
 I have found that it is best to delete the EC2 instance and create a new one and then do a fresh installation on that new instance after also dropping the PTFE schemas from PostgreSQL.  But if you want, you can try these steps instead of creating a new instance.
 
-### Remove replicated
+### Remove Replicated
 ```
 sudo su -
 replicatedctl app stop
@@ -227,7 +227,7 @@ docker images (should not show any images)
 rm -rf /var/lib/replicated* /etc/replicated* /etc/init/replicated* /etc/default/replicated* /etc/systemd/system/replicated* /etc/sysconfig/replicated* /etc/systemd/system/multi-user.target.wants/replicated* /run/replicated*
 ```
 
-## Delete all data from database:
+## Delete all Data from Database:
 ```
 psql -h roger-aurora-ptfe-cluster.cluster-cd2ntnfz8tii.us-east-1.rds.amazonaws.com -d ptfe -U ptfe
 \c ptfe
@@ -240,7 +240,7 @@ DROP SCHEMA rails CASCADE;
 
 ## Tests with Various Combinations of Certs
 
-## Test 1: leaf -> root in cert.cert, no cert in ca_certs of json
+### Test 1: leaf -> root in cert.cert, no cert in ca_certs of json
 
 Installed.
 
@@ -271,7 +271,7 @@ Plan worked.  So, root->leaf in ca_cert should also be ok.
 
 However, I wonder if the first pair (leaf->root) was cached?
 
-## Test 2: leaf -> root in cert.cert, leaf -> root in ca_certs of json
+### Test 2: leaf -> root in cert.cert, leaf -> root in ca_certs of json
 `curl -ksfSv --connect-timeout 5 https://10.0.1.43/_health_check` gives 443: Connection refused
 Then changes to 502 Bad Gateway
 Then to 200
@@ -282,7 +282,7 @@ app started
 app working
 run worked
 
-## Test 3: leaf -> root in cert.cert, root -> leaf in ca_certs of json
+### Test 3: leaf -> root in cert.cert, root -> leaf in ca_certs of json
 
 Admin console asked me for password, but then promted me to enter certs.  This is because I had SCP-ed wrong pk.key.  After replacing and setting paths in admin console, I found all settings.
 
