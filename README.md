@@ -37,7 +37,8 @@ Created cert.cert with leaf.cert followed by ca.cert on PTFE instance with `cat 
 Created pk.key with key on PTFE instance
 
 ### vi commands
-Command to replace "\n" with line breaks `\r`: `:s/\\n/\r/g`
+Command to replace "\n" with line breaks: `:s/\\n/\r/g`
+
 Command to replace line breaks with "\n": `:1,$s/\n/\\n`
 
 Add cert and key to ACM.
