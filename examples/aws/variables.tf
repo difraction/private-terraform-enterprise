@@ -18,10 +18,6 @@ variable "ssh_key_name" {
   description = "AWS key pair name to install on the EC2 instance"
 }
 
-variable "vpc_id" {
-  description = "ID of VPC to deploy into"
-}
-
 # Please include at least 2 subnets from your VPC.
 variable "subnet_ids" {
   description = "Subnet IDs of subnets in VPC"
